@@ -14,6 +14,10 @@ https://github.com/vim-denops/denops.vim
 
 https://github.com/Shougo/ddc.vim
 
+### neco-vim
+
+https://github.com/Shougo/neco-vim
+
 ## Configuration
 
 ```vim

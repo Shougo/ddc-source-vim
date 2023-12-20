@@ -20,9 +20,10 @@ This source collects Vim script items.
 ==============================================================================
 INSTALL                                               *ddc-source-vim-install*
 
-Please install both "ddc.vim" and "denops.vim".
+Please install both "ddc.vim", "neco-vim" and "denops.vim".
 
 https://github.com/Shougo/ddc.vim
+https://github.com/Shougo/neco-vim
 https://github.com/vim-denops/denops.vim
 
 
