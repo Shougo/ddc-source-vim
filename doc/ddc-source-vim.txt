@@ -1,4 +1,4 @@
-*ddc-source-vim.txt*	Vim script completion for ddc.vim
+*ddc-source-vim.txt*	Additional Vim script completion for ddc.vim
 
 Author: Shougo <Shougo.Matsu at gmail.com>
 License: MIT license
@@ -20,10 +20,9 @@ This source collects Vim script items.
 ==============================================================================
 INSTALL                                               *ddc-source-vim-install*
 
-Please install both "ddc.vim", "neco-vim" and "denops.vim".
+Please install both "ddc.vim" and "denops.vim".
 
 https://github.com/Shougo/ddc.vim
-https://github.com/Shougo/neco-vim
 https://github.com/vim-denops/denops.vim
 
 
@@ -33,7 +32,10 @@ EXAMPLES                                             *ddc-source-vim-examples*
 	call ddc#custom#patch_filetype('vim', 'sources', ['vim'])
 	
 	call ddc#custom#patch_global('sourceOptions', #{
-	      \   vim: #{ mark: 'vim' },
+	      \   vim: #{
+	      \     mark: 'vim',
+	      \     isVolatile: v:true,
+	      \   },
 	      \ })
 <
 

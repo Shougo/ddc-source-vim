@@ -5,8 +5,8 @@ import {
   Item,
   Previewer,
   SourceOptions,
-} from "https://deno.land/x/ddc_vim@v4.1.0/types.ts";
-import { Denops, fn } from "https://deno.land/x/ddc_vim@v4.1.0/deps.ts";
+} from "https://deno.land/x/ddc_vim@v4.3.1/types.ts";
+import { Denops, fn } from "https://deno.land/x/ddc_vim@v4.3.1/deps.ts";
 
 type Params = Record<string, never>;
 
@@ -27,7 +27,7 @@ export class Source extends BaseSource<Params> {
     }
 
     const variable = /[a-z]\[:([a-zA-Z_][a-zA-Z0-9_]*:\])?/;
-    const option = /&[a-zA-Z][a-zA-Z0-9_:]*/;
+    const option = /\&([gl]:)?[a-zA-Z0-9_:]*/;
     const plug = /<Plug>\([^)]*\)?'/;
     const expand = /<[a-zA-Z][a-zA-Z0-9_-]*>?/;
     const func = /[a-zA-Z_][a-zA-Z0-9_:#]*[!(]?/;
@@ -42,15 +42,19 @@ export class Source extends BaseSource<Params> {
 
   override async gather(args: {
     denops: Denops;
-    context: Context,
+    context: Context;
     options: DdcOptions;
     sourceOptions: SourceOptions;
     sourceParams: Params;
     completeStr: string;
   }): Promise<Item[]> {
+    console.log(args.context.input);
+    console.log(args.completeStr);
     return await args.denops.call(
-        'necovim#gather_candidates',
-        args.context.input, args.completeStr) as Item[];
+      "ddc#source#vim#gather",
+      args.context.input,
+      args.completeStr,
+    ) as Item[];
   }
 
   override async getPreviewer(args: {
