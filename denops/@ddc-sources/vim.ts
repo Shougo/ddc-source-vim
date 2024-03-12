@@ -48,8 +48,6 @@ export class Source extends BaseSource<Params> {
     sourceParams: Params;
     completeStr: string;
   }): Promise<Item[]> {
-    console.log(args.context.input);
-    console.log(args.completeStr);
     return await args.denops.call(
       "ddc#source#vim#gather",
       args.context.input,
