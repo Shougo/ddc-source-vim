@@ -37,7 +37,7 @@ export class Source extends BaseSource<Params> {
       `(${variable.source}|${option.source}|${plug.source}|${expand.source}|${func.source}|${env.source})$`,
     );
 
-    return curText.search(keywordPattern);
+    return args.context.input.search(keywordPattern);
   }
 
   override async gather(args: {
