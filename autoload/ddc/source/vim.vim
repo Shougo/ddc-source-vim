@@ -14,12 +14,12 @@ function ddc#source#vim#get_cur_text(input) abort
 endfunction
 
 function! ddc#source#vim#gather(input, complete_str) abort
-  const cur_text = ddc#source#vim#get_cur_text(a:input)
+  const cur_text = a:input->ddc#source#vim#get_cur_text()
 
   if a:complete_str =~# '^&\%([gl]:\?\)\?'
     " Options.
     const prefix = a:complete_str->matchstr('^&\%([gl]:\?\)\?')
-    let list = ddc#source#vim#option(cur_text)->deepcopy()
+    let list = cur_text->ddc#source#vim#option()->deepcopy()
     for keyword in list
       let keyword.word = prefix .. keyword.word
     endfor
@@ -70,10 +70,10 @@ function ddc#source#vim#filetype() abort
           \ 'ftplugin/*.vim'->globpath(&runtimepath, v:true, v:true)
 
     let s:filetypes =
-          \ s:make_completion_list(globs->map({
+          \ globs->map({
           \   _, val ->
           \   val->fnamemodify(':t:r')->matchstr('^[[:alnum:]-]*')
-          \ }))
+          \ })->s:make_completion_list()
   endif
 
   return s:filetypes
@@ -103,7 +103,9 @@ function! s:make_cache_options() abort
     endif
   endfor
 
-  return options->filter({ _, val -> val =~# '^\h\w*=\?' })->map({ _, val ->
+  return options
+        \ ->filter({ _, val -> val =~# '^\h\w*=\?' })
+        \ ->map({ _, val ->
         \   #{ word: val->substitute('=$', '', ''), kind: 'o' }
         \ })
 endfunction
@@ -141,7 +143,10 @@ function s:get_envlist() abort
   let keyword_list = []
   for line in 'set'->systemlist()
     let word = '$' .. line->matchstr('^\h\w*')->toupper()
-    call add(keyword_list, #{ word : word, kind : 'e' })
+    call add(keyword_list, #{
+          \   word : word,
+          \   kind : 'e',
+          \ })
   endfor
   return keyword_list
 endfunction
@@ -149,6 +154,11 @@ endfunction
 function s:make_completion_list(list) abort
   return a:list->copy()->map({ _, val ->
         \   val !=# '' && val[-1:] ==# '/' ?
-        \   #{ word: val[:-2], abbr: val } : #{ word: val }
+        \   #{
+        \     word: val[:-2],
+        \     abbr: val,
+        \   } : #{
+        \     word: val,
+        \   }
         \ })
 endfunction
