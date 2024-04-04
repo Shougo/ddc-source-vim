@@ -24,6 +24,9 @@ function! ddc#source#vim#gather(input, complete_str) abort
       let keyword.word = prefix .. keyword.word
     endfor
     return list
+  elseif cur_text =~# '^\w*map\s'
+    " Maps.
+    return ddc#source#vim#map()
   elseif cur_text =~# '\<has($\?[''"]\w*$'
     " Features.
     return ddc#source#vim#feature()
@@ -38,6 +41,63 @@ function! ddc#source#vim#gather(input, complete_str) abort
   return []
 endfunction
 
+function ddc#source#vim#option(cur_text) abort
+  if a:cur_text =~# '\<set\%[local]\s\+\%(filetype\|ft\)='
+    return ddc#source#vim#filetype()
+  endif
+
+  if !exists('s:options')
+    let s:options = s:make_cache_options()
+  endif
+
+  return s:options
+endfunction
+
+function ddc#source#vim#map() abort
+  if !exists('s:maps')
+    let s:maps = s:make_cache_maps() + s:make_cache_keys()
+  endif
+
+  return s:maps
+endfunction
+
+function ddc#source#vim#feature() abort
+  return [
+        \   #{
+        \     word: 'patch',
+        \     menu: '; Included patches Ex: patch123',
+        \   },
+        \   #{
+        \     word: 'patch-',
+        \     menu: '; Version and patches Ex: patch-7.4.237',
+        \   },
+        \ ]
+endfunction
+
+function ddc#source#vim#expand() abort
+  return [
+        \   '<cfile>',
+        \   '<afile>',
+        \   '<abuf>',
+        \   '<amatch>',
+        \   '<cexpr>',
+        \   '<sfile>',
+        \   '<slnum>',
+        \   '<sflnum>',
+        \   '<SID>',
+        \   '<script>',
+        \   '<stack>',
+        \   '<cword>',
+        \   '<cWORD>',
+        \   '<client>',
+        \   ':p',
+        \   ':h',
+        \   ':t',
+        \   ':r',
+        \   ':e',
+        \ ]->s:make_completion_list()
+endfunction
+
 function ddc#source#vim#environment() abort
   " Make cache.
   if !exists('s:enviroments')
@@ -45,21 +105,6 @@ function ddc#source#vim#environment() abort
   endif
 
   return s:environments
-endfunction
-
-function ddc#source#vim#expand() abort
-  return s:make_completion_list([
-        \ '<cfile>', '<afile>', '<abuf>', '<amatch>',
-        \ '<sfile>', '<cword>', '<cWORD>', '<client>'
-        \ ])
-endfunction
-
-function ddc#source#vim#feature() abort
-  if !exists('s:features')
-    let s:features = s:make_cache_features()
-  endif
-
-  return s:features
 endfunction
 
 function ddc#source#vim#filetype() abort
@@ -79,18 +124,6 @@ function ddc#source#vim#filetype() abort
   return s:filetypes
 endfunction
 
-function ddc#source#vim#option(cur_text) abort
-  if a:cur_text =~# '\<set\%[local]\s\+\%(filetype\|ft\)='
-    return ddc#source#vim#filetype()
-  endif
-
-  if !exists('s:options')
-    let s:options = s:make_cache_options()
-  endif
-
-  return s:options
-endfunction
-
 function! s:make_cache_options() abort
   let options =
         \ 'set all'->execute()->split('\s\{2,}\|\n')[1:]
@@ -105,54 +138,55 @@ function! s:make_cache_options() abort
 
   return options
         \ ->filter({ _, val -> val =~# '^\h\w*=\?' })
-        \ ->map({ _, val ->
+        \ ->map({
+        \   _, val ->
         \   #{ word: val->substitute('=$', '', ''), kind: 'o' }
         \ })
 endfunction
 
-function s:make_cache_features() abort
-  const helpfile = 'doc/eval.txt'->findfile(&runtimepath)->expand()
+function s:make_cache_maps() abort
+  const helpfile = 'doc/map.txt'->findfile(&runtimepath)->expand()
   if !helpfile->filereadable()
     return []
   endif
 
-  let features = []
   const lines = helpfile->readfile()
-  const start = lines->match('acl')
-  const end = lines->match(has('nvim') ? '^wsl' : '^x11')
-  for l in lines[start : end]
-    let _ = l->matchlist('^\(\k\+\)\t\+\(.\+\)$')
-    if !_->empty()
-      call add(features, #{ word : _[1], info : _[2] })
-    endif
-  endfor
+  const start = lines->match('1. Key mapping')
+  const end = lines->match('2. Abbreviations')
 
-  call add(features, #{
-        \   word: 'patch',
-        \   menu: '; Included patches Ex: patch123',
-        \ })
-  call add(features, #{
-        \   word: 'patch-',
-        \   menu: '; Version and patches Ex: patch-7.4.237',
-        \ })
+  return lines[start : end]->map({
+        \   _, val -> val->matchstr('\*\%(:map-\)\?\zs\(<\k\+>\)\ze\*')
+        \ })->filter({ _, val -> val !=# ''})->s:make_completion_list()
+endfunction
 
-  return features
+function s:make_cache_keys() abort
+  const helpfile = 'doc/intro.txt'->findfile(&runtimepath)->expand()
+  if !helpfile->filereadable()
+    return []
+  endif
+
+  const lines = helpfile->readfile()
+  const start = lines->match('*key-notation')
+  const end = lines->match('*vim-modes-intro*')
+
+  return lines[start : end]->map({
+        \   _, val -> val->matchstr('<\k\+>')->substitute('-…>', '-', '')
+        \ })->filter({ _, val -> val !=# ''})->s:make_completion_list()
 endfunction
 
 function s:get_envlist() abort
-  let keyword_list = []
-  for line in 'set'->systemlist()
-    let word = '$' .. line->matchstr('^\h\w*')->toupper()
-    call add(keyword_list, #{
-          \   word : word,
-          \   kind : 'e',
-          \ })
-  endfor
-  return keyword_list
+  return 'set'->systemlist()->map({
+        \ _, val ->
+        \  #{
+        \     word: '$' .. val->matchstr('^\h\w*')->toupper(),
+        \     kind: 'e',
+        \   }
+        \ })
 endfunction
 
 function s:make_completion_list(list) abort
-  return a:list->copy()->map({ _, val ->
+  return a:list->uniq()->map({
+        \ _, val ->
         \   val !=# '' && val[-1:] ==# '/' ?
         \   #{
         \     word: val[:-2],
