@@ -33,6 +33,11 @@ function! ddc#source#vim#gather(input, complete_str) abort
   elseif cur_text =~# '\<expand($\?[''"][<>[:alnum:]]*$'
     " Expand.
     return ddc#source#vim#expand()
+  elseif cur_text =~# '\$["''].*{\zs[^}]*$'
+    " String interpolation.
+    return a:complete_str
+          \ ->getcompletion('expression')
+          \ ->s:make_completion_list()
   elseif a:complete_str =~# '^\$'
     " Environment.
     return ddc#source#vim#environment()

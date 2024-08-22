@@ -5,10 +5,10 @@ import {
   type Item,
   type Previewer,
   type SourceOptions,
-} from "jsr:@shougo/ddc-vim@6.0.0/types";
+} from "jsr:@shougo/ddc-vim@6.0.1/types";
 
 import type { Denops } from "jsr:@denops/core@^7.0.0";
-import * as fn from "jsr:@denops/std@7.0.1/function";
+import * as fn from "jsr:@denops/std@7.0.3/function";
 
 type Params = Record<string, never>;
 
@@ -34,9 +34,11 @@ export class Source extends BaseSource<Params> {
     const expand = /<[a-zA-Z][a-zA-Z0-9_-]*>?/;
     const func = /[a-zA-Z_][a-zA-Z0-9_:#]*[!(]?/;
     const env = /\$[a-zA-Z_][a-zA-Z0-9_]*/;
+    const stringInterpolation = /(?<=\$["'].*{).*?(?=})/;
 
     const keywordPattern = new RegExp(
-      `(${variable.source}|${option.source}|${plug.source}|${expand.source}|${func.source}|${env.source})$`,
+      `(${variable.source}|${option.source}|${plug.source}|` +
+        `${expand.source}|${func.source}|${env.source}|${stringInterpolation})$`,
     );
 
     return args.context.input.search(keywordPattern);
