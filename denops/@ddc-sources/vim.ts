@@ -13,7 +13,7 @@ import * as fn from "jsr:@denops/std@~7.1.1/function";
 type Params = Record<string, never>;
 
 export class Source extends BaseSource<Params> {
-  isBytePos = true;
+  override isBytePos = true;
 
   override async getCompletePosition(args: {
     denops: Denops;
