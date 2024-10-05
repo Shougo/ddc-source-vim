@@ -174,9 +174,13 @@ function s:make_cache_keys() abort
   const start = lines->match('*key-notation')
   const end = lines->match('*vim-modes-intro*')
 
-  return lines[start : end]->map({
+  let keys = [
+        \   '<LeftMouse>', '<RightMouse>', '<LeftRelease>',
+        \ ] + lines[start : end]->map({
         \   _, val -> val->matchstr('<\k\+>')->substitute('-…>', '-', '')
-        \ })->filter({ _, val -> val !=# ''})->s:make_completion_list()
+        \ })->filter({ _, val -> val !=# ''})
+
+  return keys->s:make_completion_list()
 endfunction
 
 function s:get_envlist() abort
