@@ -211,17 +211,17 @@ function s:analyze_variable_line(line, keyword_dict) abort
   elseif a:line =~# '\<fu\%[nction]!\?\s\+'
     " Get function arguments.
     for arg in a:line->matchstr('^[^(]*(\zs[^)]*')->split('\s*,\s*')
-      let word = 'a:' . (arg ==# '...' ?  '000' : arg->matchstr('\w\+'))
-      let a:keyword_dict[word] = {
-            \ 'word' : word,
-            \ 'kind' : (arg ==# '...' ?  '[]' : '')
-            \}
+      let word = 'a:' .. (arg ==# '...' ?  '000' : arg->matchstr('\w\+'))
+      let a:keyword_dict[word] = #{
+            \    word: word,
+            \    kind: (arg ==# '...' ?  '[]' : ''),
+            \ }
 
     endfor
     if a:line =~# '\.\.\.)'
       " Extra arguments.
       for arg in 5->range()
-        let word = 'a:' . arg
+        let word = 'a:' .. arg
         let a:keyword_dict[word] = #{
               \   word: word,
               \   kind: (arg == 0 ?  '0' : ''),
