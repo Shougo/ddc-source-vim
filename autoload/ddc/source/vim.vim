@@ -142,7 +142,7 @@ function s:get_local_variables() abort
     let line = line_num->getline()
     if line =~# '\<endf\%[unction]\>'
       break
-    elseif line =~# '\<fu\%[nction]!\?\s\+'
+    elseif line =~# '\<\%(fu\%[nction]\|def\)!\?\s\+'
       " Get function arguments.
       call s:analyze_variable_line(line, keyword_dict)
       break
@@ -156,7 +156,7 @@ function s:get_local_variables() abort
   while line_num <= end_line
     let line = line_num->getline()
 
-    if line =~# '\<\%(let\|const\|for\)\s\+'
+    if line =~# '\<\%(let\|const\|for\|var\|final\)\s\+'
       call s:analyze_variable_line(line, keyword_dict)
     endif
 
@@ -166,12 +166,13 @@ function s:get_local_variables() abort
   return keyword_dict->values()
 endfunction
 function s:analyze_variable_line(line, keyword_dict) abort
-  if a:line =~# '\<\%(let\|const\|for\)\s\+\a[[:alnum:]_:]*'
+  let matched_single_var = a:line->matchlist(
+        \ '\<\%(let\|const\|for\|var\|final\)\s\+' ..
+        \ '\(\a[[:alnum:]_:]*\)\%(\s*=\s*\(.*\)\)\?')
+  if !matched_single_var->empty()
     " let var = pattern.
-    let word = a:line
-          \ ->matchstr('\<\%(let\|const\|for\)\s\+\zs\a[[:alnum:]_:]*')
-    let expression = a:line
-          \ ->matchstr('\<\%(let\|const\)\s\+\a[[:alnum:]_:]*\s*=\s*\zs.*$')
+    let word = matched_single_var[1]
+    let expression = matched_single_var[2]
     if !has_key(a:keyword_dict, word)
       let a:keyword_dict[word] = #{
             \    word: word,
@@ -181,34 +182,24 @@ function s:analyze_variable_line(line, keyword_dict) abort
       " Update kind.
       let a:keyword_dict[word].kind = expression->s:get_variable_type()
     endif
-  elseif a:line =~# '\<\%(let\|const\|for\)\s\+\[.\{-}\]'
+
+    return
+  endif
+
+  let matched_multiple_vars = a:line->matchlist(
+        \ '\<\%(let\|const\)\s\+\[\(.\{-}\)\]\s*=\s*')
+  if !matched_multiple_vars->empty()
     " let [var1, var2] = pattern.
-    let words = a:line
-          \ ->matchstr('\<\%(let\|const\|for\)\s\+\[\zs.\{-}\ze\]')
-          \ ->split('[,[:space:]]\+')
-    let expressions = a:line
-          \ ->matchstr(
-          \   '\<\%(let\|const\)\s\+\[.\{-}\]\s*=\s*\[\zs.\{-}\ze\]$')
-          \ ->split('[,[:space:];]\+')
+    for word in matched_multiple_vars[1]->split('[,[:space:]]\+')
+      let a:keyword_dict[word] = #{
+            \   word: word,
+            \ }
+    endfor
 
-    let i = 0
-    while i < words->len()
-      let expression = expressions->get(i, '')
-      let word = words[i]
+    return
+  endif
 
-      if !a:keyword_dict->has_key(word)
-        let a:keyword_dict[word] = #{
-              \   word: word,
-              \   kind: expression->s:get_variable_type()
-              \ }
-      elseif expression !=# '' && a:keyword_dict[word].kind ==# ''
-        " Update kind.
-        let a:keyword_dict[word].kind = expression->s:get_variable_type()
-      endif
-
-      let i += 1
-    endwhile
-  elseif a:line =~# '\<fu\%[nction]!\?\s\+'
+  if a:line =~# '\<fu\%[nction]!\?\s\+'
     " Get function arguments.
     for arg in a:line->matchstr('^[^(]*(\zs[^)]*')->split('\s*,\s*')
       let word = 'a:' .. (arg ==# '...' ?  '000' : arg->matchstr('\w\+'))
@@ -228,6 +219,15 @@ function s:analyze_variable_line(line, keyword_dict) abort
               \ }
       endfor
     endif
+  elseif a:line =~# '\<def!\?\s\+'
+    " Get Vim9 script function arguments.
+    for arg in a:line->matchstr('^[^(]*(\zs[^)]*')->split('\s*,\s*')
+      let word = arg->matchstr('\w\+')
+      let a:keyword_dict[word] = #{
+            \    word: word,
+            \ }
+
+    endfor
   endif
 endfunction
 function s:get_variable_type(expression) abort
