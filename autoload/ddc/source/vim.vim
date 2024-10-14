@@ -295,7 +295,14 @@ function s:make_cache_keys() abort
   const end = lines->match('*vim-modes-intro*')
 
   let keys = [
-        \   '<LeftMouse>', '<RightMouse>', '<LeftRelease>',
+        \   '<LeftMouse>', '<LeftDrag>', '<LeftRelease>',
+        \   '<RightMouse>', '<RightDrag>', '<RightRelease>',
+        \   '<MiddleMouse>', '<MiddleDrag>', '<MiddleRelease>',
+        \   '<X1Mouse>', '<X1Drag>', '<X1Release>',
+        \   '<X2Mouse>', '<X2Drag>', '<X2Release>',
+        \   '<2-LeftMouse>', '<3-LeftMouse>', '<4-LeftMouse>',
+        \   '<A-LeftMouse>', '<S-LeftMouse>', '<C-LeftMouse>',
+        \   '<A-RightMouse>', '<S-RightMouse>', '<C-RightMouse>',
         \ ] + lines[start : end]->map({
         \   _, val -> val->matchstr('<\k\+>')->substitute('-…>', '-', '')
         \ })->filter({ _, val -> val !=# ''})
