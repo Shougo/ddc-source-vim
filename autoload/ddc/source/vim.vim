@@ -178,7 +178,7 @@ function s:analyze_variable_line(line, keyword_dict) abort
             \    word: word,
             \    kind: expression->s:get_variable_type(),
             \ }
-    elseif expression !=# '' && a:keyword_dict[word].kind ==# ''
+    elseif expression !=# '' && a:keyword_dict[word]->get('kind', '') ==# ''
       " Update kind.
       let a:keyword_dict[word].kind = expression->s:get_variable_type()
     endif
