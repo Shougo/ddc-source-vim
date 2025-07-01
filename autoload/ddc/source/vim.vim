@@ -16,8 +16,10 @@ endfunction
 function ddc#source#vim#gather(input, complete_str) abort
   const cur_text = a:input->ddc#source#vim#get_cur_text()
 
+  " TODO: Use getcmdcompltype() to parse Vim script.
   if a:complete_str =~# '^&\%([gl]:\?\)\?'
     " Options.
+    " complete = option
     const prefix = a:complete_str->matchstr('^&\%([gl]:\?\)\?')
     let list = cur_text->ddc#source#vim#option()->deepcopy()
     for keyword in list
@@ -26,6 +28,7 @@ function ddc#source#vim#gather(input, complete_str) abort
     return list
   elseif cur_text =~# '^\w*map\s'
     " Maps.
+    " complete = mapping
     return ddc#source#vim#map()
   elseif cur_text =~# '\<has($\?[''"]\w*$'
     " Features.
@@ -40,6 +43,7 @@ function ddc#source#vim#gather(input, complete_str) abort
           \ ->s:make_completion_list()
   elseif a:complete_str =~# '^\$'
     " Environment.
+    " complete = environment
     return ddc#source#vim#environment()
   elseif cur_text !~# '^[[:digit:],[:space:][:tab:]$''<>]*\h\w*$'
     return s:get_local_variables()
