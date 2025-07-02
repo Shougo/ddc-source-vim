@@ -1,4 +1,8 @@
 function ddc#source#vim#get_cur_text(input) abort
+  if mode() ==# 'c'
+    return a:input
+  endif
+
   let cur_text = a:input
 
   let line = '.'->line()
