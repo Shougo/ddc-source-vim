@@ -17,23 +17,36 @@ function ddc#source#vim#get_cur_text(input) abort
   return cur_text->split('\s\+|\s\+\|<bar>', 1)[-1]
 endfunction
 
+function s:get_completion_type(input) abort
+  " NOTE: getcmdcompltype() {pat} argument may be not implemented.
+  try
+    return getcmdcompltype(a:input)
+  catch
+  endtry
+
+  " Fallback.
+  if a:input =~ '^\w*map\s'
+    return 'mapping'
+  elseif a:input =~ '\$\w*$'
+    return 'environment'
+  endif
+
+  return ''
+endfunction
+
 function ddc#source#vim#gather(input, complete_str) abort
   const cur_text = a:input->ddc#source#vim#get_cur_text()
+  const completion_type = s:get_completion_type(cur_text)
 
   " TODO: Use getcmdcompltype() to parse Vim script.
-  if a:complete_str =~# '^&\%([gl]:\?\)\?'
+  if completion_type ==# 'option' || a:complete_str =~# '^&\%([gl]:\?\)\?'
     " Options.
-    " complete = option
     const prefix = a:complete_str->matchstr('^&\%([gl]:\?\)\?')
     let list = cur_text->ddc#source#vim#option()->deepcopy()
     for keyword in list
       let keyword.word = prefix .. keyword.word
     endfor
     return list
-  elseif cur_text =~# '^\w*map\s'
-    " Maps.
-    " complete = mapping
-    return ddc#source#vim#map()
   elseif cur_text =~# '\<has($\?[''"]\w*$'
     " Features.
     return ddc#source#vim#feature()
@@ -45,9 +58,11 @@ function ddc#source#vim#gather(input, complete_str) abort
     return a:complete_str
           \ ->getcompletion('expression')
           \ ->s:make_completion_list()
-  elseif a:complete_str =~# '^\$'
+  elseif completion_type ==# 'mapping'
+    " Maps.
+    return ddc#source#vim#map()
+  elseif completion_type ==# 'environment'
     " Environment.
-    " complete = environment
     return ddc#source#vim#environment()
   elseif cur_text !~# '^[[:digit:],[:space:][:tab:]$''<>]*\h\w*$'
     return s:get_local_variables()
