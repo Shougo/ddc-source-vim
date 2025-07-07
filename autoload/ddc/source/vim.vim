@@ -18,11 +18,9 @@ function ddc#source#vim#get_cur_text(input) abort
 endfunction
 
 function s:get_completion_type(input) abort
-  " NOTE: getcmdcompltype() {pat} argument may be not implemented.
-  try
-    return getcmdcompltype(a:input)
-  catch
-  endtry
+  if '*getcompletiontype'->exists()
+    return getcompletiontype(a:input)
+  endif
 
   " Fallback.
   if a:input =~ '^\w*map\s'
