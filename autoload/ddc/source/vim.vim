@@ -127,12 +127,13 @@ function ddc#source#vim#expand() abort
 endfunction
 
 function ddc#source#vim#environment() abort
-  " Make cache.
-  if !exists('s:environments')
-    let s:environments = s:get_envlist()
-  endif
-
-  return s:environments
+  return environ()->keys()->map({
+        \ _, val ->
+        \  #{
+        \     word: '$' .. val,
+        \     kind: 'e',
+        \   }
+        \ })
 endfunction
 
 function ddc#source#vim#filetype() abort
@@ -329,25 +330,6 @@ function s:make_cache_keys() abort
         \ })->filter({ _, val -> val !=# ''})
 
   return keys->s:make_completion_list()
-endfunction
-
-function s:get_envlist() abort
-  if '*environ'->exists()
-    return environ()->keys()->map({
-          \ _, val ->
-          \  #{
-          \     word: '$' .. val,
-          \     kind: 'e',
-          \   }
-          \ })
-  endif
-  return 'set'->systemlist()->map({
-        \ _, val ->
-        \  #{
-        \     word: '$' .. val->matchstr('^\h\w*')->toupper(),
-        \     kind: 'e',
-        \   }
-        \ })
 endfunction
 
 function s:make_completion_list(list) abort
