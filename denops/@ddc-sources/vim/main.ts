@@ -22,7 +22,7 @@ const stringInterpolation = /(?<=\$["'].*{).*?(?=})/;
 
 const keywordPattern = new RegExp(
   `(${variable.source}|${option.source}|${plug.source}|` +
-    `${expand.source}|${func.source}|${env.source}|${stringInterpolation})$`,
+    `${expand.source}|${func.source}|${env.source}|${stringInterpolation.source})$`,
 );
 
 export class Source extends BaseSource<Params> {
