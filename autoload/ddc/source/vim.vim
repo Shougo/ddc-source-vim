@@ -128,7 +128,7 @@ endfunction
 
 function ddc#source#vim#environment() abort
   " Make cache.
-  if !exists('s:enviroments')
+  if !exists('s:environments')
     let s:environments = s:get_envlist()
   endif
 
@@ -297,8 +297,8 @@ function s:make_cache_maps() abort
   endif
 
   const lines = helpfile->readfile()
-  const start = lines->match('1. Key mapping')
-  const end = lines->match('2. Abbreviations')
+  const start = lines->match('1\. Key mapping')
+  const end = lines->match('2\. Abbreviations')
 
   return lines[start : end]->map({
         \   _, val -> val->matchstr('\*\%(:map-\)\?\zs\(<\k\+>\)\ze\*')
@@ -312,8 +312,8 @@ function s:make_cache_keys() abort
   endif
 
   const lines = helpfile->readfile()
-  const start = lines->match('*key-notation')
-  const end = lines->match('*vim-modes-intro*')
+  const start = lines->match('\*key-notation')
+  const end = lines->match('\*vim-modes-intro\*')
 
   let keys = [
         \   '<LeftMouse>', '<LeftDrag>', '<LeftRelease>',
@@ -332,6 +332,15 @@ function s:make_cache_keys() abort
 endfunction
 
 function s:get_envlist() abort
+  if '*environ'->exists()
+    return environ()->keys()->map({
+          \ _, val ->
+          \  #{
+          \     word: '$' .. val,
+          \     kind: 'e',
+          \   }
+          \ })
+  endif
   return 'set'->systemlist()->map({
         \ _, val ->
         \  #{

@@ -12,6 +12,19 @@ import * as fn from "@denops/std/function";
 
 type Params = Record<string, never>;
 
+const variable = /[a-z]:([a-zA-Z_][a-zA-Z0-9_]*)?/;
+const option = /\&([gl]:)?[a-zA-Z0-9_:]*/;
+const plug = /<Plug>\([^)]*\)?/;
+const expand = /<[a-zA-Z][a-zA-Z0-9_-]*>?/;
+const func = /[a-zA-Z_][a-zA-Z0-9_:#]*[!(]?/;
+const env = /\$[a-zA-Z_][a-zA-Z0-9_]*/;
+const stringInterpolation = /(?<=\$["'].*{).*?(?=})/;
+
+const keywordPattern = new RegExp(
+  `(${variable.source}|${option.source}|${plug.source}|` +
+    `${expand.source}|${func.source}|${env.source}|${stringInterpolation})$`,
+);
+
 export class Source extends BaseSource<Params> {
   override isBytePos = true;
 
@@ -27,19 +40,6 @@ export class Source extends BaseSource<Params> {
       // Comment
       return -1;
     }
-
-    const variable = /[a-z]\[:([a-zA-Z_][a-zA-Z0-9_]*:\])?/;
-    const option = /\&([gl]:)?[a-zA-Z0-9_:]*/;
-    const plug = /<Plug>\([^)]*\)?'/;
-    const expand = /<[a-zA-Z][a-zA-Z0-9_-]*>?/;
-    const func = /[a-zA-Z_][a-zA-Z0-9_:#]*[!(]?/;
-    const env = /\$[a-zA-Z_][a-zA-Z0-9_]*/;
-    const stringInterpolation = /(?<=\$["'].*{).*?(?=})/;
-
-    const keywordPattern = new RegExp(
-      `(${variable.source}|${option.source}|${plug.source}|` +
-        `${expand.source}|${func.source}|${env.source}|${stringInterpolation})$`,
-    );
 
     return args.context.input.search(keywordPattern);
   }
